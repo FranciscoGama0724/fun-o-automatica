@@ -5,19 +5,20 @@ steps:
       - '-c'
       - |
         pip install --upgrade -r requirements.txt
+
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
-      [
-        'functions',
-        'deploy',
-        'process_file_upload',
-        '--runtime=python310',
-        '--trigger-resource=bucket-teste001',
-        '--trigger-event=google.storage.object.finalize',
-        '--entry-point=process_file_upload',
-        '--source=.',
-        '--region=us-central1',
-        '--project=neogov-default'
-      ]
+      - 'functions'
+      - 'deploy'
+      - 'process_file_upload'
+      - '--runtime=python310'
+      - '--trigger-resource=bucket-teste001'
+      - '--trigger-event=google.storage.object.finalize'
+      - '--entry-point=process_file_upload'
+      - '--source=.'
+      - '--region=us-central1'
+      - '--project=neogov-default'
+
 timeout: 540s
+
 
