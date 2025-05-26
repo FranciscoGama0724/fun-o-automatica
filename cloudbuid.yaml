@@ -9,11 +9,10 @@ steps:
         '--image', 'gcr.io/$PROJECT_ID/fun-o-automatica',
         '--region', 'us-central1',
         '--platform', 'managed',
-        '--allow-unauthenticated',
-        '--memory', '512Mi',
-        '--timeout', '600s'
+        '--allow-unauthenticated'
       ]
 
 images:
   - 'gcr.io/$PROJECT_ID/fun-o-automatica'
+
 
