@@ -1,6 +1,0 @@
-google-cloud-storage
-google-cloud-bigquery
-pytz
-PyPDF2
-functions-framework
-cloudevents
