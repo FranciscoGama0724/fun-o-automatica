@@ -12,30 +12,26 @@ app = Flask(__name__)
 @app.route("/", methods=["POST"])
 def process_file_upload():
     event_data = request.get_json()
+    data = event_data.get("message", {}).get("attributes", {})
 
-    if not event_data or 'data' not in event_data:
-        return "Evento inválido", 400
+    bucket_name = data.get("bucketId") or data.get("bucket")
+    file_name = data.get("objectId") or data.get("name")
 
-    data = event_data['data']
+    if not bucket_name or not file_name:
+        return "Dados de evento inválidos", 400
 
     storage_client = storage.Client()
     bigquery_client = bigquery.Client()
-
-    bucket_name = data['bucket']
-    file_name = data['name']
 
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.get_blob(file_name)
 
     if not blob:
-        return f"Arquivo '{file_name}' não encontrado no bucket '{bucket_name}'", 404
+        return f"Arquivo '{file_name}' não encontrado em '{bucket_name}'", 404
 
-    blob.patch()
-    print(f'Upload realizado por: {blob.owner}')
-
+    user_email = blob.owner.get('entity', 'unknown-user').split('-')[-1]
+    user_name = user_email.split('@')[0] if '@' in user_email else user_email
     user_id = str(uuid.uuid4())
-    user_email = blob.owner['entity'].split('-')[1]
-    user_name = user_email.split('@')[0]
 
     now = datetime.now(pytz.timezone('America/Sao_Paulo'))
     date = now.strftime('%Y-%m-%d %H:%M:%S')
@@ -45,20 +41,21 @@ def process_file_upload():
     pdf_reader = PdfReader(io.BytesIO(pdf_bytes))
 
     if pdf_reader.is_encrypted:
-        print("O PDF está criptografado. Nenhuma ação será realizada.")
         return "PDF criptografado", 200
 
     num_pages = len(pdf_reader.pages)
 
-    INSERT = (
-        f"INSERT INTO `neogov-default.arquivos.relatorios_uploads` "
-        f"VALUES ('{user_id}', '{user_email}', '{user_name}', '{date}', '{file_url}', {num_pages})"
+    query = f"""
+    INSERT INTO `neogov-default.arquivos.relatorios_uploads`
+    (user_id, user_email, user_name, date, file_url, num_pages)
+    VALUES (
+        '{user_id}', '{user_email}', '{user_name}', '{date}', '{file_url}', {num_pages}
     )
+    """
 
-    bigquery_client.query(INSERT)
-    print('Valores salvos na tabela')
+    bigquery_client.query(query)
 
-    return "Processamento concluído com sucesso", 200
+    return "Registro salvo no BigQuery com sucesso", 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))

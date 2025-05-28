@@ -14,5 +14,3 @@ steps:
 
 images:
   - 'gcr.io/$PROJECT_ID/fun-o-automatica'
-
-
